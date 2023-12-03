@@ -2,7 +2,7 @@ from typing import Union
 
 from fastapi import FastAPI
 
-app = FastAPI(title="Trading App")
+app = FastAPI(title="Book storage")
 
 @app.get('/')
 async def test_page():
