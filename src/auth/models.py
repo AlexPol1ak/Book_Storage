@@ -7,6 +7,7 @@ from database import Base
 
 
 class User(Base):
+    """User's model"""
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto")
@@ -17,7 +18,7 @@ class User(Base):
     email: Mapped[str] = mapped_column(String(30), unique=True)
     phone_number: Mapped[str] = mapped_column(String(20), nullable=True)
     status: Mapped[str] = mapped_column(String(10), default="std")
-    is_activ = mapped_column(Boolean, default=True)
+    is_active = mapped_column(Boolean, default=True)
     is_admin = mapped_column(Boolean, default=False)
     is_superuser = mapped_column(Boolean, default=False)
     data_joined = mapped_column(TIMESTAMP, default=datetime.utcnow)
