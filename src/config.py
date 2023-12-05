@@ -11,3 +11,4 @@ DB_USER = os.environ['DB_USER']
 DB_PASS = os.environ['DB_PASS']
 
 SECRET_AUTH = os.environ['SECRET_AUTH']
+LIFETIME_TOKEN = int(os.environ['LIFETIME_TOKEN'])

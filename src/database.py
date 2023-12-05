@@ -19,5 +19,4 @@ async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
 class Base(DeclarativeBase):
     pass
 
-#Base.metadata.create_all(engine.sync_engine)
 
