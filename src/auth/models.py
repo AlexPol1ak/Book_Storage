@@ -1,11 +1,10 @@
 from datetime import datetime
 from typing import List
 
-from fastapi import Depends
-from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable, SQLAlchemyUserDatabase
+from fastapi_users_db_sqlalchemy import SQLAlchemyBaseUserTable
 from sqlalchemy import String, Boolean, TIMESTAMP, Float, Integer, CheckConstraint, ForeignKey, text
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import Mapped, mapped_column, validates, relationship, Session
+from sqlalchemy_utils import PhoneNumberType
 
 from database import Base
 
@@ -20,7 +19,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     last_name: Mapped[str] = mapped_column(String(30))
     username: Mapped[str] = mapped_column(String(30), unique=True)
     email: Mapped[str] = mapped_column(String(length=320), unique=True, index=True, nullable=False)
-    phone_number: Mapped[str] = mapped_column(String(20), nullable=True)
+    phone_number = mapped_column(PhoneNumberType(), nullable=True)
     status_id: Mapped[int] = mapped_column(ForeignKey('status.id'),
                                            default=text("(SELECT id FROM status ORDER BY max_size_text_file LIMIT 1)"))
     status: Mapped['status'] = relationship("Status", back_populates="users")
