@@ -1,6 +1,5 @@
 from auth.utils.constraints.constraint import Constraint
-from typing import Type
-
+# Класс для ограничений пользователя в соответствии с его статусом
 
 class Limits:
     def __init__(self):
