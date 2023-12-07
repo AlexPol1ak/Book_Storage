@@ -2,7 +2,8 @@ from datetime import datetime
 from typing import Optional
 
 from fastapi_users import schemas
-from pydantic import Field
+from fastapi_users.schemas import CreateUpdateDictModel
+from pydantic import EmailStr, BaseModel
 
 
 class UserRead(schemas.BaseUser[int]):
@@ -13,36 +14,39 @@ class UserRead(schemas.BaseUser[int]):
     username: str
     email: str
     phone_number: Optional[str]
-    status: str = "STD"
+    status_id: int
     is_active: bool
     is_admin: bool
     is_superuser: bool
     data_joined: datetime
     rating: float
 
-    class Config:
-        from_attributes = True
 
-
-class UserCreate(schemas.BaseUserCreate):
+class UserCreate(CreateUpdateDictModel):
     """A schema for user creation."""
     first_name: str
     last_name: str
     username: str
+    password: str
+    email: EmailStr
     phone_number: Optional[str]
-    is_active: Optional[bool] = Field(exclude=True)
-    is_verified: Optional[bool] = Field(exclude=True)
-    is_superuser: Optional[bool] = Field(exclude=True)
-
-    # class Config:
-    #     exclude = {'is_active', 'is_superuser', 'is_verified'}
 
 
-class UserUpdate(schemas.BaseUserUpdate):
+class UserUpdate(BaseModel):
     """Schema for updating a user."""
-    first_name: Optional[str]
-    last_name: Optional[str]
-    username: Optional[str]
-    password: Optional[str]
-    email: Optional[str]
-    phone_number: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    username: Optional[str] = None
+    password: Optional[str] = None
+    email: Optional[EmailStr] = None
+    phone_number: Optional[str] = None
+
+
+class UserUpdateFull(UserUpdate):
+    """Updates all the user's information."""
+    status_id: Optional[int] = None
+    is_active: Optional[bool] = None
+    is_admin: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+    data_joined: Optional[bool] = None
+    rating: Optional[float] = None
