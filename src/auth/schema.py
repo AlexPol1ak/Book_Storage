@@ -4,6 +4,7 @@ from typing import Optional
 from fastapi_users import schemas
 from fastapi_users.schemas import CreateUpdateDictModel
 from pydantic import EmailStr, BaseModel
+from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
 class UserRead(schemas.BaseUser[int]):
@@ -13,7 +14,7 @@ class UserRead(schemas.BaseUser[int]):
     last_name: str
     username: str
     email: str
-    phone_number: Optional[str]
+    phone_number: Optional[PhoneNumber]
     status_id: int
     is_active: bool
     is_admin: bool
@@ -29,7 +30,7 @@ class UserCreate(CreateUpdateDictModel):
     username: str
     password: str
     email: EmailStr
-    phone_number: Optional[str]
+    phone_number: Optional[PhoneNumber]
 
 
 class UserUpdate(BaseModel):
@@ -39,7 +40,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     email: Optional[EmailStr] = None
-    phone_number: Optional[str] = None
+    phone_number: Optional[PhoneNumber] = None
 
 
 class UserUpdateFull(UserUpdate):
