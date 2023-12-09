@@ -2,12 +2,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Path, Depends
 from fastapi_users import FastAPIUsers
+from sqlalchemy import update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.auth_config import auth_backend, current_user
 from auth.manager import get_user_manager
 from auth.models import User
 from auth.schema import UserRead, UserCreate, UserUpdate, UserUpdateFull
-from auth.utils.user import get_user_db
+from database import get_async_session
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
@@ -30,12 +32,23 @@ user_router.include_router(
 
 
 @user_router.put("/user/update/", tags=['user'])
-async def user_self_update(data: UserUpdate, user=Depends(current_user)):
+async def user_self_update(data: UserUpdate,
+                           auth_user=Depends(current_user),
+                           session: AsyncSession = Depends(get_async_session)):
     """Updating the user with their data."""
+    data_dict = data.model_dump(exclude_none=True)
+    if 'password' in data_dict:
+        manager = await get_user_manager().__anext__()
+        data_dict['hashed_password'] = manager.password_helper.hash(data_dict['password'])
+        data_dict.pop("password")
 
-    print(data.username)
-    return data
+    stmt = (update(User).where(User.id == auth_user.id).
+            values(**data_dict).returning(User))
+    result = await session.scalar(stmt)
+    await session.commit()
 
+    result_model = UserRead.model_validate(result, from_attributes=True)
+    return result_model
 
 
 @user_router.put("/user/update/{user_id}", tags=['user'])
