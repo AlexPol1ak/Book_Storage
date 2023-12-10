@@ -32,6 +32,13 @@ user_router.include_router(
 )
 
 
+@user_router.get("/user/info/me", tags=['user'])
+async def user_info_me(auth_user=Depends(current_user), session: AsyncSession = Depends(get_async_session)) -> UserRead:
+    """Returns information about the registered user."""
+    user: User = await crud.get_user(session, auth_user.id)
+    return UserRead.model_validate(user)
+
+
 @user_router.get("/user/info/{id_or_username}", tags=['user'])
 async def user_info(id_or_username: str | int,
                     auth_user=Depends(current_user),
