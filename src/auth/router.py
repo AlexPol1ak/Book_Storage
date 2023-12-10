@@ -32,6 +32,26 @@ user_router.include_router(
 )
 
 
+@user_router.get("/user/info/{id_or_username}", tags=['user'])
+async def user_info(id_or_username: str | int,
+                    auth_user=Depends(current_user),
+                    session: AsyncSession = Depends(get_async_session)) -> UserRead:
+    """Returns information about a user by their id or username."""
+    ind: str | int
+    user_db: User | None
+    try:
+        ind = int(id_or_username)
+    except ValueError:
+        ind = id_or_username
+
+    user_db = await crud.get_user(session, ind)
+    if not user_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail={"message": f"User not found"})
+
+    return UserRead.model_validate(user_db)
+
+
 @user_router.put("/user/update/", tags=['user'])
 async def user_self_update(data: UserUpdate,
                            auth_user=Depends(current_user),
@@ -46,7 +66,7 @@ async def user_self_update(data: UserUpdate,
 async def user_update(user_id: Annotated[int, Path(qe=1)],
                       data: UserUpdateFull,
                       auth_user=Depends(current_user),
-                      session: AsyncSession = Depends(get_async_session)) :
+                      session: AsyncSession = Depends(get_async_session)):
     """The administrator updates the user data."""
     if not auth_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
