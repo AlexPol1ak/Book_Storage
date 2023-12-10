@@ -55,4 +55,4 @@ class Status(Base):
         return value
 
     def __repr__(self):
-        return f"{self.id}: {self.name}"
+        return f"Name: {self.name}- id: {self.id}"

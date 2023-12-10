@@ -1,8 +1,9 @@
+
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.manager import get_user_manager
-from auth.models import User
+from auth.models import User, Status
 from auth.schema import UserUpdateFull, UserUpdate
 
 
@@ -37,3 +38,17 @@ async def update_user(session: AsyncSession, model_data: UserUpdate, user_id: in
     result = await session.scalar(stmt)
     await session.commit()
     return result
+
+
+async def get_all_statuses(session: AsyncSession, return_dict=False) -> list[Status] | dict[str, Status]:
+    """Returns all available statuses."""
+    stmt = select(Status)
+    result = await session.scalars(stmt)
+    statuses: list[Status] = list(result.all())
+
+    if return_dict:
+        result_dict = {}
+        for status in statuses:
+            result_dict[str(status.name)] = status
+        return result_dict
+    return statuses
