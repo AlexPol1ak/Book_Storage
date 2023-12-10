@@ -47,7 +47,7 @@ class UserUpdate(BaseModel):
 
 class UserUpdateFull(UserUpdate):
     """Updates all the user's information."""
-    status_id: Optional[str] = None
+    status_id: Optional[int] = None
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
     is_superuser: Optional[bool] = None
