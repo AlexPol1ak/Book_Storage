@@ -1,8 +1,7 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Path, Depends, HTTPException, status
+from fastapi import APIRouter, Path, Depends, HTTPException, status, Body
 from fastapi_users import FastAPIUsers
-from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from auth.auth_config import auth_backend, current_user
@@ -78,6 +77,16 @@ async def user_update(user_id: Annotated[int, Path(qe=1)],
     if not auth_user.is_superuser:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail={"message": "Not enough rights to perform the operation."})
+
+    if data.status is not None:
+        user_statuses: list[str] = await crud.collection_statuses(session, view='list')
+        if data.status not in user_statuses:
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                                detail={
+                                    "message": f"The status of {data.status} is not available. "
+                                               f"Available statuses: {', '.join(user_statuses)}.",
+                                    'statuses': user_statuses,
+                                })
 
     user_db = await crud.update_user(session, data, user_id)
     if user_db is None:
