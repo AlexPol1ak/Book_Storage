@@ -3,9 +3,9 @@ from typing import Literal
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.manager import get_user_manager, get_password_hash
-from auth.models import User, Status
-from auth.schema import UserUpdate
+from user.manager import get_user_manager, get_password_hash
+from user.models import User, Status
+from user.schema import UserUpdateScheme
 from database import get_async_session
 
 
@@ -26,7 +26,7 @@ async def get_user(session: AsyncSession, user: int | str) -> User | None:
     return result
 
 
-async def update_user(session: AsyncSession, model_data: UserUpdate, user_id: int) -> User:
+async def update_user(session: AsyncSession, model_data: UserUpdateScheme, user_id: int) -> User:
     """Update user."""
 
     data_dict = model_data.model_dump(exclude_none=True)
@@ -50,6 +50,29 @@ async def update_user(session: AsyncSession, model_data: UserUpdate, user_id: in
 
     await session.commit()
     return result
+
+
+async def delete_user(session: AsyncSession, user: int | str) -> bool:
+    """
+    Get user database.
+    :param session: instance AsyncSession
+    :param user: id: int or username: str
+    :return: True if the user is deleted. False if not deleted (e.g. not found).
+    """
+    result: User | None = None
+
+    if isinstance(user, int):
+        result = await session.get(User, user)
+    elif isinstance(user, str):
+        stmt = select(User).where(User.username == user)
+        result = await session.scalar(stmt)
+
+    if result is not None:
+        await session.delete(result)
+        await session.commit()
+        return True
+    else:
+        return False
 
 
 async def get_all_statuses(session: AsyncSession) -> list[Status]:

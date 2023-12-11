@@ -25,7 +25,7 @@ class UserRead(schemas.BaseUser[int]):
     rating: float
 
 
-class UserCreate(CreateUpdateDictModel):
+class UserCreateScheme(CreateUpdateDictModel):
     """A schema for user creation."""
     first_name: str = Field(max_length=30)
     last_name: str = Field(max_length=30)
@@ -35,7 +35,7 @@ class UserCreate(CreateUpdateDictModel):
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
 
 
-class UserUpdate(BaseModel):
+class UserUpdateScheme(BaseModel):
     """Schema for updating a user."""
     first_name: Optional[str] = Field(default=None, max_length=30)
     last_name: Optional[str] = Field(default=None, max_length=30)
@@ -45,10 +45,16 @@ class UserUpdate(BaseModel):
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
 
 
-class UserUpdateFull(UserUpdate):
+class UserUpdateFull(UserUpdateScheme):
     """Updates all the user's information."""
     status: Optional[str] = Field(example='STD', default=None)
     is_active: Optional[bool] = None
     is_admin: Optional[bool] = None
     is_superuser: Optional[bool] = None
     rating: Optional[float] = None
+
+
+class UserDeleteScheme(BaseModel):
+    """Deleted user account"""
+    email: Optional[EmailStr]
+    password: Optional[str] = Field(default=None, max_length=30)

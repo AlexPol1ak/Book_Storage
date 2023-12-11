@@ -11,7 +11,7 @@ from alembic import context
 sys.path.append(os.path.join(sys.path[0], 'src'))
 
 from src.config import DB_HOST, DB_PASS, DB_NAME, DB_USER, DB_PORT
-from src.auth.models import User
+from src.user.models import User
 from src.database import Base
 
 config = context.config

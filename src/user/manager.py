@@ -3,8 +3,8 @@ from typing import Optional
 from fastapi import Depends, Request
 from fastapi_users import BaseUserManager, IntegerIDMixin, models, schemas, exceptions
 
-from auth.models import User
-from auth.utils.user import get_user_db
+from user.models import User
+from user.utils.user import get_user_db
 from config import SECRET_AUTH
 
 
