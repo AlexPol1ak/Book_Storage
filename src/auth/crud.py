@@ -3,7 +3,7 @@ from typing import Literal
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from auth.manager import get_user_manager
+from auth.manager import get_user_manager, get_password_hash
 from auth.models import User, Status
 from auth.schema import UserUpdate
 from database import get_async_session
@@ -13,7 +13,7 @@ async def get_user(session: AsyncSession, user: int | str) -> User | None:
     """
     Get user database.
     :param session: instance AsyncSession
-    :param user: id: int or username:str
+    :param user: id: int or username: str
     :return: An instance of the user table or None if none is found.
     """
     result: User | None = None
@@ -32,8 +32,7 @@ async def update_user(session: AsyncSession, model_data: UserUpdate, user_id: in
     data_dict = model_data.model_dump(exclude_none=True)
 
     if 'password' in data_dict:
-        manager = await get_user_manager().__anext__()
-        data_dict['hashed_password'] = manager.password_helper.hash(data_dict['password'])
+        data_dict['hashed_password'] = await get_password_hash(data_dict['password'])
         data_dict.pop("password")
 
     # Replacing the string representation of a status with its id. If it exists.
@@ -48,6 +47,7 @@ async def update_user(session: AsyncSession, model_data: UserUpdate, user_id: in
     stmt = (update(User).where(User.id == user_id).
             values(**data_dict).returning(User))
     result = await session.scalar(stmt)
+
     await session.commit()
     return result
 
