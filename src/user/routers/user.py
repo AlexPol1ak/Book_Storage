@@ -1,11 +1,13 @@
-from fastapi import APIRouter, Depends, Path, HTTPException
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Path, HTTPException, Response
 from fastapi_users import FastAPIUsers
 from sqlalchemy.ext.asyncio import AsyncSession
 from starlette import status
 
 from database import get_async_session
 from user import crud
-from user.auth_config import auth_backend, current_user
+from user.auth_config import auth_backend, current_user, validate_password
 from user.manager import get_user_manager
 from user.models import User
 from user.schema import UserRead, UserCreateScheme, UserUpdateScheme, UserDeleteScheme
@@ -24,51 +26,31 @@ user_router.include_router(
 
 user_router.include_router(
     fastapi_users.get_register_router(UserRead, UserCreateScheme),
-    prefix="/auth/jwt",
+    prefix="/auth",
 )
 
+router: APIRouter = fastapi_users.get_users_router(UserRead, UserUpdateScheme)
 
-@user_router.get("/user/info/me")
-async def user_info_me(auth_user=Depends(current_user), session: AsyncSession = Depends(get_async_session)) -> UserRead:
-    """Returns information about the registered user."""
-    user: User = await crud.get_user(session, auth_user.id)
-    return UserRead.model_validate(user)
+# Remove APIRoute(path='/{id}', name='users:patch_user', methods=['PATCH']),
+#        APIRoute(path='/{id}', name='users:delete_user', methods=['DELETE'])
+router.routes = list(filter(lambda r: r.name != 'users:patch_user' and r.name != 'users:delete_user', router.routes))
 
-
-@user_router.get("/user/info/{id_or_username}")
-async def user_info(id_or_username: str | int,
-                    auth_user=Depends(current_user),
-                    session: AsyncSession = Depends(get_async_session)) -> UserRead:
-    """Returns information about a user by their id or username."""
-    ind: str | int
-    user_db: User | None
-    try:
-        ind = int(id_or_username)
-    except ValueError:
-        ind = id_or_username
-
-    user_db = await crud.get_user(session, ind)
-    if not user_db:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
-                            detail={"message": f"User not found"})
-
-    return UserRead.model_validate(user_db)
+user_router.include_router(router, prefix='/users')
 
 
-@user_router.put("/user/update/")
-async def user_self_update(data: UserUpdateScheme,
-                           auth_user=Depends(current_user),
-                           session: AsyncSession = Depends(get_async_session)) -> UserRead:
-    """Updating the user with their data."""
+@user_router.delete('/delete/me', status_code=status.HTTP_200_OK)
+async def user_self_delete(
+        data: UserDeleteScheme,
+        response: Response,
+        auth_user=Depends(current_user),
+        session: AsyncSession = Depends(get_async_session),
 
-    user_db = await crud.update_user(session, data, auth_user.id)
-    return UserRead.model_validate(user_db)
-
-
-@user_router.delete("/user/delete/")
-async def user_self_delete(data: UserDeleteScheme,
-                           auth_user=Depends(current_user),
-                           session: AsyncSession = Depends(get_async_session),
-                           ):
-    """Account deletion by a user."""
-    pass
+):
+    """A user deleting their page."""
+    user_db = await crud.get_user(session, auth_user.id)
+    if user_db.email == data.email and await validate_password(data.password, user_db.hashed_password):
+        flag = await crud.delete_user(session, user_db)
+        response.delete_cookie('Authorization')
+        return {'deleted': flag}
+    else:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect login password")

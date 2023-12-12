@@ -1,12 +1,10 @@
-from typing import Literal
+from typing import Literal, Type
 
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from user.manager import get_user_manager, get_password_hash
 from user.models import User, Status
 from user.schema import UserUpdateScheme
-from database import get_async_session
 
 
 async def get_user(session: AsyncSession, user: int | str) -> User | None:
@@ -26,46 +24,48 @@ async def get_user(session: AsyncSession, user: int | str) -> User | None:
     return result
 
 
-async def update_user(session: AsyncSession, model_data: UserUpdateScheme, user_id: int) -> User:
-    """Update user."""
+# async def update_user(session: AsyncSession, model_data: UserUpdateScheme, user_id: int) -> User:
+#     """Update user."""
+#
+#     data_dict = model_data.model_dump(exclude_none=True)
+#
+#     if 'password' in data_dict:
+#         data_dict['hashed_password'] = await get_password_hash(data_dict['password'])
+#         data_dict.pop("password")
+#
+#     # Replacing the string representation of a status with its id. If it exists.
+#     if 'status' in data_dict:
+#         status = data_dict['status']
+#         statuses_dict: dict[str, Status] = await collection_statuses(session, view='dict')
+#         if status in statuses_dict:
+#             data_dict['status_id'] = statuses_dict[status].id
+#
+#         data_dict.pop('status')
+#
+#     stmt = (update(User).where(User.id == user_id).
+#             values(**data_dict).returning(User))
+#     result = await session.scalar(stmt)
+#
+#     await session.commit()
+#     return result
 
-    data_dict = model_data.model_dump(exclude_none=True)
 
-    if 'password' in data_dict:
-        data_dict['hashed_password'] = await get_password_hash(data_dict['password'])
-        data_dict.pop("password")
-
-    # Replacing the string representation of a status with its id. If it exists.
-    if 'status' in data_dict:
-        status = data_dict['status']
-        statuses_dict: dict[str, Status] = await collection_statuses(session, view='dict')
-        if status in statuses_dict:
-            data_dict['status_id'] = statuses_dict[status].id
-
-        data_dict.pop('status')
-
-    stmt = (update(User).where(User.id == user_id).
-            values(**data_dict).returning(User))
-    result = await session.scalar(stmt)
-
-    await session.commit()
-    return result
-
-
-async def delete_user(session: AsyncSession, user: int | str) -> bool:
+async def delete_user(session: AsyncSession, user: int | str | User) -> bool:
     """
     Get user database.
     :param session: instance AsyncSession
     :param user: id: int or username: str
     :return: True if the user is deleted. False if not deleted (e.g. not found).
     """
-    result: User | None = None
+    result: User | None | Type[User] = None
 
     if isinstance(user, int):
         result = await session.get(User, user)
     elif isinstance(user, str):
         stmt = select(User).where(User.username == user)
         result = await session.scalar(stmt)
+    elif isinstance(user, User):
+        result = user
 
     if result is not None:
         await session.delete(result)

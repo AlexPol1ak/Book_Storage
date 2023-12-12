@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Union
 
 from fastapi import Depends, Request
-from fastapi_users import BaseUserManager, IntegerIDMixin, models, schemas, exceptions
+from fastapi_users import BaseUserManager, IntegerIDMixin, models, schemas, exceptions, InvalidPasswordException
 
 from user.models import User
 from user.utils.user import get_user_db
@@ -36,7 +36,6 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
         user_dict['is_superuser'] = False
 
         created_user = await self.user_db.create(user_dict)
-
         await self.on_after_register(created_user, request)
 
         return created_user
@@ -45,9 +44,3 @@ class UserManager(IntegerIDMixin, BaseUserManager[User, int]):
 async def get_user_manager(user_db=Depends(get_user_db)):
     yield UserManager(user_db)
 
-
-async def get_password_hash(row_password: str) -> str:
-    """Returns the password hash."""
-    manager = await get_user_manager().__anext__()
-    password_hash = manager.password_helper.hash(row_password)
-    return password_hash

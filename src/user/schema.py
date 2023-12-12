@@ -35,7 +35,7 @@ class UserCreateScheme(CreateUpdateDictModel):
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
 
 
-class UserUpdateScheme(BaseModel):
+class UserUpdateScheme(CreateUpdateDictModel):
     """Schema for updating a user."""
     first_name: Optional[str] = Field(default=None, max_length=30)
     last_name: Optional[str] = Field(default=None, max_length=30)
@@ -56,5 +56,5 @@ class UserUpdateFull(UserUpdateScheme):
 
 class UserDeleteScheme(BaseModel):
     """Deleted user account"""
-    email: Optional[EmailStr]
-    password: Optional[str] = Field(default=None, max_length=30)
+    email: EmailStr
+    password: str = Field(default=None, max_length=30)
