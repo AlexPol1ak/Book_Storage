@@ -10,7 +10,7 @@ from user import crud
 from user.auth_config import auth_backend, current_user, validate_password
 from user.manager import get_user_manager
 from user.models import User
-from user.schema import UserRead, UserCreateScheme, UserUpdateScheme, UserDeleteScheme, UserReadFull
+from user.schema import UserReadScheme, UserCreateScheme, UserUpdateScheme, UserDeleteScheme, UserReadFullScheme
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
@@ -25,11 +25,11 @@ user_router.include_router(
 )
 
 user_router.include_router(
-    fastapi_users.get_register_router(UserRead, UserCreateScheme),
+    fastapi_users.get_register_router(UserReadScheme, UserCreateScheme),
     prefix="/auth",
 )
 
-router: APIRouter = fastapi_users.get_users_router(UserRead, UserUpdateScheme)
+router: APIRouter = fastapi_users.get_users_router(UserReadScheme, UserUpdateScheme)
 
 # Remove APIRoute(path='/{id}', name='users:patch_user', methods=['PATCH']),
 #        APIRoute(path='/{id}', name='users:delete_user', methods=['DELETE'])
@@ -59,7 +59,7 @@ async def user_self_delete(
 @user_router.get('/user/info/{id_or_username}', tags=['User'])
 async def user_info(id_or_username: int | str,
                     auth_user=Depends(current_user),
-                    session: AsyncSession = Depends(get_async_session)) -> UserRead | UserReadFull:
+                    session: AsyncSession = Depends(get_async_session)) -> UserReadScheme | UserReadFullScheme:
     """Returns information about the user based on the user's permissions."""
     try:
         user = abs(int(id_or_username))
@@ -71,6 +71,6 @@ async def user_info(id_or_username: int | str,
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
 
     if auth_user.is_admin or auth_user.is_superuser:
-        return UserReadFull.model_validate(user_db)
+        return UserReadFullScheme.model_validate(user_db)
     else:
-        return UserRead.model_validate(user_db)
+        return UserReadScheme.model_validate(user_db)

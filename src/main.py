@@ -1,8 +1,7 @@
-from typing import Union
 
 from fastapi import FastAPI
 
-from user.routers.admin import admin_router
+from user.routers.privileged_users import admin_router
 from user.routers.user import user_router
 
 app = FastAPI(title="Book storage")

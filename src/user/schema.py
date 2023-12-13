@@ -7,7 +7,7 @@ from pydantic import EmailStr, BaseModel, ConfigDict, Field
 from pydantic_extra_types.phone_numbers import PhoneNumber
 
 
-class UserRead(schemas.BaseUser[int]):
+class UserReadScheme(schemas.BaseUser[int]):
     """A schematic for the user to read."""
     model_config = ConfigDict(from_attributes=True)
 
@@ -18,7 +18,7 @@ class UserRead(schemas.BaseUser[int]):
     is_superuser: bool = Field(exclude=True)
 
 
-class UserReadFull(UserRead):
+class UserReadFullScheme(UserReadScheme):
     """A complete user reading scheme."""
     email: EmailStr
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
@@ -46,11 +46,11 @@ class UserUpdateScheme(CreateUpdateDictModel):
     last_name: Optional[str] = Field(default=None, max_length=30)
     username: Optional[str] = Field(default=None, max_length=30)
     password: Optional[str] = Field(default=None, max_length=30)
-    email: Optional[EmailStr]
+    email: Optional[EmailStr] = None
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
 
 
-class UserUpdateFull(UserUpdateScheme):
+class UserUpdateFullScheme(UserUpdateScheme):
     """Updates all the user's information."""
     status: Optional[str] = Field(example='STD', default=None)
     is_active: Optional[bool] = None

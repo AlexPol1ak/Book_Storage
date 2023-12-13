@@ -1,10 +1,11 @@
-from typing import Literal, Type
+from typing import Literal, Type, Any, Coroutine
 
 from sqlalchemy import update, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from user.manager import get_user_manager
 from user.models import User, Status
-from user.schema import UserUpdateScheme
+from user.schema import UserUpdateFullScheme
 
 
 async def get_user(session: AsyncSession, user: int | str) -> User | None:
@@ -17,37 +18,42 @@ async def get_user(session: AsyncSession, user: int | str) -> User | None:
     result: User | None = None
 
     if isinstance(user, int):
-        result = await session.get(User, user)
+        result = await session.get(User, abs(user))
     elif isinstance(user, str):
         stmt = select(User).where(User.username == user)
         result = await session.scalar(stmt)
     return result
 
 
-# async def update_user(session: AsyncSession, model_data: UserUpdateScheme, user_id: int) -> User:
-#     """Update user."""
-#
-#     data_dict = model_data.model_dump(exclude_none=True)
-#
-#     if 'password' in data_dict:
-#         data_dict['hashed_password'] = await get_password_hash(data_dict['password'])
-#         data_dict.pop("password")
-#
-#     # Replacing the string representation of a status with its id. If it exists.
-#     if 'status' in data_dict:
-#         status = data_dict['status']
-#         statuses_dict: dict[str, Status] = await collection_statuses(session, view='dict')
-#         if status in statuses_dict:
-#             data_dict['status_id'] = statuses_dict[status].id
-#
-#         data_dict.pop('status')
-#
-#     stmt = (update(User).where(User.id == user_id).
-#             values(**data_dict).returning(User))
-#     result = await session.scalar(stmt)
-#
-#     await session.commit()
-#     return result
+async def update_user(session: AsyncSession, model_data: UserUpdateFullScheme, user_id: int) \
+        -> Coroutine[Any, Any, User | None] | None:
+    """Update user."""
+    data_dict = model_data.model_dump(exclude_none=True)
+
+    if 'status' in data_dict:
+        user = await get_user(session, user_id)
+        if not user:
+            return None
+        statuses: dict[str, Status] = await collection_statuses(session, view='dict')
+        if data_dict['status'] in statuses:
+            status: Status = statuses[data_dict['status']]
+            user.status = status
+            session.add(user)
+            data_dict.pop('status')
+        else:
+            raise ValueError(f"Status '{data_dict['status']}' not found")
+
+    if 'password' in data_dict:
+        manager = await anext(get_user_manager())
+        hashed_password = manager.password_helper.hash(data_dict['password'])
+        data_dict['hashed_password'] = hashed_password
+        data_dict.pop('password')
+
+    stmt = update(User).where(User.id == user_id).values(**data_dict).returning(User)
+    updated_user = await session.scalar(stmt)
+    await session.commit()
+
+    return updated_user
 
 
 async def delete_user(session: AsyncSession, user: int | str | User) -> bool:
