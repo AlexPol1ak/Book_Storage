@@ -10,7 +10,7 @@ from user import crud
 from user.auth_config import auth_backend, current_user, validate_password
 from user.manager import get_user_manager
 from user.models import User
-from user.schema import UserRead, UserCreateScheme, UserUpdateScheme, UserDeleteScheme
+from user.schema import UserRead, UserCreateScheme, UserUpdateScheme, UserDeleteScheme, UserReadFull
 
 fastapi_users = FastAPIUsers[User, int](
     get_user_manager,
@@ -54,3 +54,23 @@ async def user_self_delete(
         return {'deleted': flag}
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect login password")
+
+
+@user_router.get('/user/info/{id_or_username}', tags=['User'])
+async def user_info(id_or_username: int | str,
+                    auth_user=Depends(current_user),
+                    session: AsyncSession = Depends(get_async_session)) -> UserRead | UserReadFull:
+    """Returns information about the user based on the user's permissions."""
+    try:
+        user = abs(int(id_or_username))
+    except ValueError:
+        user = id_or_username
+
+    user_db = await crud.get_user(session, user)
+    if not user_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='User not found')
+
+    if auth_user.is_admin or auth_user.is_superuser:
+        return UserReadFull.model_validate(user_db)
+    else:
+        return UserRead.model_validate(user_db)

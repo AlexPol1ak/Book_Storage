@@ -15,6 +15,11 @@ class UserRead(schemas.BaseUser[int]):
     first_name: str = Field(max_length=30)
     last_name: str = Field(max_length=30)
     username: str = Field(max_length=30)
+    is_superuser: bool = Field(exclude=True)
+
+
+class UserReadFull(UserRead):
+    """A complete user reading scheme."""
     email: EmailStr
     phone_number: Optional[PhoneNumber] = Field(default=None, examples=['+375331010101'])
     status_id: int
