@@ -29,16 +29,20 @@ async def update_user(session: AsyncSession, model_data: UserUpdateFullScheme, u
         -> Coroutine[Any, Any, User | None] | None:
     """Update user."""
     data_dict = model_data.model_dump(exclude_none=True)
+    if len(data_dict) == 0:
+        raise ValueError("Empty data.")
+    updated_user: User | None = None
 
     if 'status' in data_dict:
         user = await get_user(session, user_id)
         if not user:
-            return None
+            raise ValueError(f"User id {user_id} not found")
         statuses: dict[str, Status] = await collection_statuses(session, view='dict')
         if data_dict['status'] in statuses:
             status: Status = statuses[data_dict['status']]
             user.status = status
             session.add(user)
+            updated_user = user
             data_dict.pop('status')
         else:
             raise ValueError(f"Status '{data_dict['status']}' not found")
@@ -49,8 +53,10 @@ async def update_user(session: AsyncSession, model_data: UserUpdateFullScheme, u
         data_dict['hashed_password'] = hashed_password
         data_dict.pop('password')
 
-    stmt = update(User).where(User.id == user_id).values(**data_dict).returning(User)
-    updated_user = await session.scalar(stmt)
+    if len(data_dict) > 0:
+        stmt = update(User).where(User.id == user_id).values(**data_dict).returning(User)
+        updated_user = await session.scalar(stmt)
+
     await session.commit()
 
     return updated_user
