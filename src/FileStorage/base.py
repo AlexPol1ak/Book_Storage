@@ -3,14 +3,35 @@ import shutil
 
 
 class BaseStorage:
-    def __init__(self, storage_path: str, storage_name: str):
+    def __init__(self, storage_path: str, storage_name: str, temporary: bool = False):
         """
-        Storage Initializer.
+        Storage initialization.
         :param storage_path: Path to the directory where the repository should be created.
         :param storage_name: Storage directory name .
+        :param temporary: If True, the storage will be marked as temporary.
+                          After program termination the storage directory,
+                          all directories in it and files will be deleted.
+                          Deleting an object with 'del' will also delete all files.
+                          If False - the storage and files will remain on the disk after program termination.
+                          By default, False.
         """
-        self.__path = self.__create_storage(storage_path, storage_name)
-        self.__name = storage_name
+        self.__path, self.__name = self.__get_or_create(storage_path, storage_name)
+        self.__temporary = temporary
+
+    def __get_or_create(self, storage_path: str, storage_name: str) -> tuple[str, str]:
+        """
+        If the storage already exists on disk - it returns the absolute path to it and its name.
+        If it does not exist, it creates it and returns absolute path and name.
+        :param storage_path: Path to the directory where the repository should be created.
+        :param storage_name: Storage directory name .
+        :return: Absolute path to storage , storage name.
+        """
+        storage_path = self.__validate_path(storage_path)
+        full_path = os.path.join(storage_path, storage_name)
+        if os.path.isdir(full_path):
+            return full_path, storage_name
+        else:
+            return self.__create_storage(storage_path, storage_name), storage_name
 
     def __create_storage(self, storage_path: str, storage_name: str) -> str:
         """
@@ -19,13 +40,12 @@ class BaseStorage:
         :param storage_name: Storage directory name .
         :return: Full path to the storage directory.
         """
-        full_path = self.__validate_path(storage_path)
-        storage_path = os.path.join(full_path, storage_name)
+        full_path = os.path.join(storage_path, storage_name)
         try:
-            os.mkdir(storage_path)
+            os.mkdir(full_path)
         except FileExistsError:
             pass
-        return storage_path
+        return full_path
 
     @staticmethod
     def __validate_path(storage_path: str) -> str:
@@ -35,15 +55,15 @@ class BaseStorage:
         Returns absolute path.
         """
         if not os.path.exists(storage_path):
-            raise NotADirectoryError
+            raise NotADirectoryError(f"Path: {storage_path} not found")
+
+        if not os.path.isdir(storage_path):
+            raise NotADirectoryError(f"The path: {storage_path} doesn't lead to a directory.")
+
+        if os.path.isabs(storage_path):
+            return storage_path
         else:
-            if not os.path.isdir(storage_path):
-                raise NotADirectoryError
-            else:
-                if os.path.isabs(storage_path):
-                    return storage_path
-                else:
-                    return os.path.abspath(storage_path)
+            return os.path.abspath(storage_path)
 
     def delete_storage(self, all_files: bool = False) -> None:
         """
@@ -103,3 +123,14 @@ class BaseStorage:
     def __repr__(self):
         return f"Storage:\nName: {self.name}\nPath: {self.path}"
 
+    def __del__(self):
+        if self.__temporary:
+            self.delete_storage(all_files=True)
+        del self
+
+
+if __name__ == '__main__':
+    dr = os.path.dirname(os.path.abspath(__file__))
+    st = BaseStorage(dr, "Storage")
+    print(st)
+    # st.delete_storage()
