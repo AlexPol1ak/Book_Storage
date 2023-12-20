@@ -3,6 +3,7 @@ import shutil
 
 
 class BaseStorage:
+    """Basic storage for storing files."""
     def __init__(self, storage_path: str, storage_name: str, temporary: bool = False):
         """
         Storage initialization.
@@ -71,6 +72,8 @@ class BaseStorage:
         :param all_files: If True, it tries to delete the storage and all files in it.
                           If False - deletes the repository if it is empty or raises OSError. Default is False.
         :return: None
+        :raises FileNotFoundError: If the directory is not found.
+        :raises IsADirectoryError: If the directory is not empty.
         """
         if os.path.isdir(self.__path):
             if not all_files:
@@ -79,8 +82,8 @@ class BaseStorage:
                 except FileNotFoundError:
                     raise FileNotFoundError("Directory not found.")
                 except OSError:
-                    raise OSError("The directory is not empty. If you really want to delete the repository and files "
-                                  "use the flag all_files=True")
+                    raise IsADirectoryError("The directory is not empty. If you really want to delete the repository "
+                                            "and fil use the flag all_files=True")
             elif all_files:
                 shutil.rmtree(self.__path)
         else:
@@ -129,8 +132,8 @@ class BaseStorage:
         del self
 
 
-if __name__ == '__main__':
-    dr = os.path.dirname(os.path.abspath(__file__))
-    st = BaseStorage(dr, "Storage")
-    print(st)
-    # st.delete_storage()
+class Storage(BaseStorage):
+    """A class for storing user files."""
+    @property
+    def relpath(self):
+        return os.path.relpath(self.path)
