@@ -23,7 +23,7 @@ if __name__ == '__main__':
         # await st.delete_category('Cat2', mode='moveFiles', new_category= 'Cat3')
         # await st.move_all_files('Cat3', 'Cat2')
         # await st.move_all_files('Cat2', 'Cat3')
-        await st.delete_category('Cat2')
+        print(await st.all_categories())
 
 
     asyncio.run(main())

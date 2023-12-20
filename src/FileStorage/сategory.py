@@ -1,9 +1,6 @@
 import asyncio
 import os
-import time
 from typing import Literal
-
-import aitertools
 import aiofiles.os as a_os
 import aioshutil as a_shutil
 from asyncstdlib import any_iter
