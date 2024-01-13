@@ -26,6 +26,7 @@ class User(SQLAlchemyBaseUserTable[int], Base):
     is_superuser = mapped_column(Boolean, default=False)
     data_joined = mapped_column(TIMESTAMP, default=datetime.utcnow)
     rating: Mapped[float] = mapped_column(Float, default=0)
+    category = relationship('Category', back_populates='user')
 
     def __repr__(self) -> str:
         return f"id: {self.id} username: {self.username}, status: {self.status}"
