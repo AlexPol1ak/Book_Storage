@@ -3,8 +3,8 @@ from datetime import datetime
 from sqlalchemy import String, Text, TIMESTAMP, ForeignKey
 from sqlalchemy.orm import mapped_column, Mapped, relationship
 
-from src.database import Base
-from src.user.models import User
+from database import Base
+from user.models import User
 
 
 class Category(Base):

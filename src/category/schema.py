@@ -9,6 +9,7 @@ class CategoryReadScheme(BaseModel):
 
     name: str
     description: Optional[str]
+    data_joined: datetime
 
 
 class CategoryReadFullScheme(CategoryReadScheme):
@@ -16,7 +17,6 @@ class CategoryReadFullScheme(CategoryReadScheme):
 
     id: int
     patch: str
-    data_joined: datetime
     creator: int
 
 
@@ -24,5 +24,6 @@ class CategoryCreateScheme(BaseModel):
     """A schema for creating a category."""
     model_config = ConfigDict(from_attributes=True)
 
-    name: str = Field(min_length=30)
-    description: Optional[str] = Field(min_length=500)
+    name: str = Field(min_length=3 ,max_length=30, example='CategoryName.')
+    description: Optional[str] = Field(min_length=3, max_length=500,
+                                       example="Category description up to 500 characters.")
