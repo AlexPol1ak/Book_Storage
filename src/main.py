@@ -1,3 +1,4 @@
+# python 3.11.1
 
 from fastapi import FastAPI
 
