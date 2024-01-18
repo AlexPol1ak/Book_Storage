@@ -12,6 +12,7 @@ from category.schema import CategoryCreateScheme, CategoryReadScheme
 from config import STORAGE
 from database import get_async_session
 from user.auth_config import current_user
+from utils.text_formatter import name_formatter
 
 p_category_router = APIRouter(tags=['Admin and superuser', 'Category'], prefix='/category')
 
@@ -25,8 +26,12 @@ async def create_category(
 
     if auth_user.is_superuser or auth_user.is_admin:
         try:
-            category_path = await STORAGE.add_category(data.name)
-            category_obj = await crud.create_category(session, data.name, data.description, category_path, auth_user.id)
+            name = await name_formatter(data.name, punctuation_del=True)
+            category_system_name = await name_formatter(name, translit_text='ru-en',
+                                                        replace_space="_")
+            category_path = await STORAGE.add_category(category_system_name)
+            category_obj = await crud.create_category(session, name, category_system_name, data.description,
+                                                      category_path, auth_user.id)
             return CategoryReadScheme.model_validate(category_obj)
         except (FileExistsError, ValueError):
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,

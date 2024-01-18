@@ -24,10 +24,11 @@ async def check_category(session: AsyncSession, category_name: str) -> bool:
         return False
 
 
-async def create_category(session: AsyncSession, category_name: str, category_description: str,
+async def create_category(session: AsyncSession, category_name: str, category_system_name:str, category_description: str,
                           category_path: str, category_creator: int) -> Category:
     """
     Creates a new category record in the table.
+    :param category_system_name: Category name in Latin characters, without spaces and punctuation marks.
     :param session: Instance AsyncSession.
     :param category_name: Name of the new category.
     :param category_description: Description of the new category
@@ -40,8 +41,8 @@ async def create_category(session: AsyncSession, category_name: str, category_de
     cat_flag: bool = await check_category(session, category_name)
 
     if not cat_flag:
-        new_category: Category = Category(name=category_name, description=category_description,
-                                          path=category_path)
+        new_category: Category = Category(name=category_name,system_name=category_system_name,
+                                          description=category_description, path=category_path)
         user = await get_user(session, category_creator)
 
         new_category.user = user
