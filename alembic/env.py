@@ -5,11 +5,13 @@ import os
 import sys
 
 sys.path.append(os.path.join(sys.path[0], 'src'))
-
+from database import Base
 from alembic import context
 from src.category.models import Category
 from src.config import DB_HOST, DB_PASS, DB_NAME, DB_USER, DB_PORT
 from src.user.models import User, Status
+
+
 
 config = context.config
 
@@ -25,7 +27,8 @@ config.set_section_option(section, 'DB_PASS', DB_PASS)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-target_metadata = [User.metadata, Category.metadata]
+# target_metadata = [User.metadata, Category.metadata]
+target_metadata = Base.metadata
 
 
 # other values from the config, defined by the needs of env.py,

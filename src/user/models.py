@@ -10,6 +10,7 @@ from database import Base
 class User(SQLAlchemyBaseUserTable[int], Base):
     """User's model"""
     __tablename__ = 'user'
+    __table_args__ = {'extend_existing': True}
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto")
     hashed_password: Mapped[str] = mapped_column(String(length=1024), nullable=False)
@@ -35,6 +36,8 @@ class User(SQLAlchemyBaseUserTable[int], Base):
 class Status(Base):
     """A model of user status and constraints."""
     __tablename__ = 'status'
+    __table_args__ = {'extend_existing': True}
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement="auto")
     name: Mapped[str] = mapped_column(String(10), unique=True)
     max_size_text_file: Mapped[int] = mapped_column(Integer(), CheckConstraint('max_size_text_file >= 1024'))
