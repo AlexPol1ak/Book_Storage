@@ -51,20 +51,54 @@ class CategoryCRUD:
             user = await get_user(session, category_creator)
 
             new_category.user = user
-
             session.add_all([new_category, user])
             await session.commit()
+
             return new_category
         else:
             raise ValueError(f'Category {category_name} already exists')
 
     @staticmethod
-    async def get_category():
-        pass
+    async def get_category(session: AsyncSession, name_or_id: str | int) -> Category | None:
+        """
+        Get a category by name or id.
+        :param session: Instance AsyncSession.
+        :param name_or_id: Category name or category id.
+        :return: Category or None.
+        :raises TypeError: If type argument  not str or int.
+        """
+
+        if isinstance(name_or_id, int):
+            category = await session.get(Category, name_or_id)
+            return category
+        elif isinstance(name_or_id, str):
+            stmt = select(Category).where(Category.name == name_or_id)
+            category = await session.scalar(stmt)
+            return category
+        else:
+            raise TypeError
 
     @staticmethod
-    async def update_category():
-        pass
+    async def update_category(session: AsyncSession, name_or_id: str, *, category_description: str | None = None,
+                              new_name: str | None = None):
+        category = await CategoryCRUD.get_category(session, name_or_id)
+        if not category:
+            raise NotADirectoryError
+
+        if category_description or new_name:
+            if new_name:
+                if await CategoryCRUD.check_category(session, new_name):
+                    raise ValueError(f"Category {new_name} exist")
+                else:
+                    category.name = new_name
+
+            if category_description:
+                category.description = category_description
+
+            session.add(category)
+            await session.commit()
+
+        return category
 
     @staticmethod
     async def del_category():

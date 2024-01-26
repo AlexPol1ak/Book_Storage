@@ -1,5 +1,7 @@
 # Manage categories in the file system and database.
 
+from typing import Any
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from FileStorage import StorageManager
@@ -31,13 +33,13 @@ class CategoryManager(BaseCategoryManager):
     Combines category management in the file system and in the database.
     """
 
-    async def create(self, session: AsyncSession, name: str, description: str, creator: int) -> Category:
+    async def create(self, session: AsyncSession, name: str, description: str, creator: int) -> dict[str, Any]:
         """
         :param session: Instance AsyncSession.
         :param name: Name of the new category.
         :param description: Description of the new category.
         :param creator: d of the privileged user who created the category.
-        :return: Category db object.
+        :return: A dictionary with category data. {'id':int, 'description': int, 'data_joined': datetime, 'creator':int}
         :raises FileExistsError: If category exists in file system.
         :raises ValueError: If category exists in database.
         """
@@ -50,4 +52,9 @@ class CategoryManager(BaseCategoryManager):
         category_obj = await self.category_crud.create_category(session, frmt_name, category_system_name, description,
                                                                 category_path, creator)
 
-        return category_obj
+        result = {'id': category_obj.id, 'name': category_obj.name,
+                  'description': category_obj.description, 'data_joined': category_obj.data_joined,
+                  'creator': creator
+                  }
+
+        return result
