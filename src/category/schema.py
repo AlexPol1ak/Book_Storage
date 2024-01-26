@@ -24,6 +24,14 @@ class CategoryCreateScheme(BaseModel):
     """A schema for creating a category."""
     model_config = ConfigDict(from_attributes=True)
 
-    name: str = Field(min_length=3 ,max_length=30, example='CategoryName.')
+    name: str = Field(min_length=3, max_length=30, example='CategoryName.')
     description: Optional[str] = Field(min_length=3, max_length=500,
-                                       example="Category description up to 500 characters.")
+                                       example="Category description up to 500 characters.", default=None)
+
+
+class CategoryUpdateScheme(BaseModel):
+    """A schema for updating a category."""
+
+    name: Optional[str] = Field(max_length=30, example='New name', default=None)
+    description: Optional[str] = Field(min_length=3, max_length=500,
+                                       example="Category new description. Up to 500 characters.", default=None)

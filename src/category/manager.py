@@ -52,9 +52,33 @@ class CategoryManager(BaseCategoryManager):
         category_obj = await self.category_crud.create_category(session, frmt_name, category_system_name, description,
                                                                 category_path, creator)
 
-        result = {'id': category_obj.id, 'name': category_obj.name,
-                  'description': category_obj.description, 'data_joined': category_obj.data_joined,
-                  'creator': creator
-                  }
+        return await self.__to_dict(category_obj)
 
+    async def update(self, session: AsyncSession, category_name_or_id: str | int, *,
+                     new_name: str = None, new_description: str = None) -> dict[str, Any]:
+        """
+        Updates a category by name or id . Updates the category name or description.
+        :param session: Instance AsyncSession.
+        :param  category_name_or_id: Category name or id.
+        :param new_description: New description. Default None.
+        :param new_name: New name. Default None.
+        :return: A dictionary with category data. {'id':int, 'description': int, 'data_joined': datetime,
+                'creator':int, path: str}.
+        :raises TypeError: If new_name type argument not str or int.
+        :raises NotADirectoryError: If the category does not exist.
+        :raises ValueError: If a category with that new_name already exists.
+                """
+        category_obj = await self.category_crud.update_category(session, category_name_or_id,
+                                                                new_name=new_name, new_description=new_description)
+        return await self.__to_dict(category_obj)
+
+    async def __to_dict(self, category_obj: Category) -> dict[str, Any]:
+        """Converts a database object into a dictionary."""
+        result = {'id': category_obj.id,
+                  'name': category_obj.name,
+                  'description': category_obj.description,
+                  'date_joined': category_obj.data_joined,
+                  'creator': category_obj.creator,
+                  'path': category_obj.path,
+                  }
         return result
