@@ -72,6 +72,24 @@ class CategoryManager(BaseCategoryManager):
                                                                 new_name=new_name, new_description=new_description)
         return await self.__to_dict(category_obj)
 
+    async def delete(self, session: AsyncSession, category_name_or_id: str | int):
+        """
+        Deletes a category from storage and from the database. If the category does not contain any files.
+        :param session: AsyncSession instance.
+        :param category_name_or_id: Category name or id.
+        :return: None.
+        :raises TypeError: Incorrect type argument category_name_or_id.
+        :raises NotADirectoryError: If category is not exist or not found.
+        :raises IsADirectoryError: If category is not empty.
+        """
+
+        category_obj = await CategoryCRUD.get_category(session, category_name_or_id)
+        if not category_obj:
+            raise NotADirectoryError
+
+        await self.storage.delete_category(category_obj.system_name, mode='empty')
+        await CategoryCRUD.delete_category(session, category_obj)
+
     async def __to_dict(self, category_obj: Category) -> dict[str, Any]:
         """Converts a database object into a dictionary."""
         result = {'id': category_obj.id,

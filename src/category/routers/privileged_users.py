@@ -10,6 +10,7 @@ from category.schema import CategoryCreateScheme, CategoryReadScheme, CategoryUp
 from config import STORAGE
 from database import get_async_session
 from user.auth_config import current_user
+from user.user_dependencies import is_superuser_or_admin
 
 p_category_router = APIRouter(tags=['Admin and superuser', 'Category'], prefix='/category')
 
@@ -54,3 +55,20 @@ async def update_category(category_name_or_id: str | int,
     else:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
                             detail=f"Not enough authority.")
+
+
+@p_category_router.delete('/delete/{category_name_or_id}', status_code=status.HTTP_204_NO_CONTENT)
+async def delete_category(category_name_or_id: str | int,
+                          auth_user=Depends(is_superuser_or_admin),
+                          session: AsyncSession = Depends(get_async_session)
+                          ):
+    """Deletes a category if it is not empty."""
+
+    try:
+        await category_manager.delete(session, category_name_or_id)
+    except NotADirectoryError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
+                            detail=f"Category {category_name_or_id} not found.")
+    except IsADirectoryError:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,
+                            detail=f"Category {category_name_or_id} is not empty.")

@@ -90,6 +90,7 @@ class CategoryManager:
         :return: None
         :raises NotADirectoryError: If category does not exist.
         :raises ValueError: Incorrect literal mode.
+        :raises IsADirectoryError: If category is not empty and mode is 'empty'.
         """
 
         cats = await self.all_categories()

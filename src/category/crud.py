@@ -82,7 +82,7 @@ class CategoryCRUD:
             raise TypeError
 
     @staticmethod
-    async def update_category(session: AsyncSession, name_or_id: str, *, new_description: str | None = None,
+    async def update_category(session: AsyncSession, name_or_id: str | int, *, new_description: str | None = None,
                               new_name: str | None = None) -> Category | None:
         """
         Updates a category by name or id . Updates the category name or description.
@@ -115,8 +115,28 @@ class CategoryCRUD:
         return category
 
     @staticmethod
-    async def del_category():
-        pass
+    async def delete_category(session: AsyncSession, name_or_id_or_obj: str | int | Category) -> None:
+        """
+        Removes a category by name or id or database object.
+        :param session: AsyncSession instance.
+        :param name_or_id_or_obj:  Category name or id or object Category
+        :return: None.
+        :raises TypeError: If the argument is not a string, integer or Category object
+        :raises NotADirectoryError: If Category not found.
+        """
+
+        if isinstance(name_or_id_or_obj, (int, str)):
+            category_obj = await CategoryCRUD.get_category(session, name_or_id_or_obj)
+        elif isinstance(name_or_id_or_obj, Category):
+            category_obj = name_or_id_or_obj
+        else:
+            raise TypeError("The argument must be a string, an integer, or a Category object.")
+
+        if not category_obj:
+            raise NotADirectoryError("Category not found.")
+
+        await session.delete(category_obj)
+        await session.commit()
 
     @staticmethod
     async def all_category():
