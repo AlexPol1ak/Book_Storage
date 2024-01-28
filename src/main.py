@@ -17,5 +17,5 @@ async def test_page():
 
 app.include_router(user_router)
 app.include_router(admin_router)
-# app.include_router(category_router)
+app.include_router(category_router)
 app.include_router(p_category_router)

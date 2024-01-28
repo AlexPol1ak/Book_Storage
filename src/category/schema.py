@@ -9,7 +9,12 @@ class CategoryReadScheme(BaseModel):
 
     name: str
     description: Optional[str]
-    data_joined: datetime
+    date_joined: datetime
+
+
+class CategoryInfoScheme(CategoryReadScheme):
+    """A schema for reading the category."""
+    count_files: int = Field(ge=0, description='Number of files')
 
 
 class CategoryReadFullScheme(CategoryReadScheme):

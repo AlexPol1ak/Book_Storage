@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from FileStorage import StorageManager
 from category.crud import CategoryCRUD
 from category.models import Category
+from config import STORAGE
 from utils.text_formatter import TextFormatter
 
 
@@ -32,6 +33,23 @@ class CategoryManager(BaseCategoryManager):
     Manages categories at the database and file system level.
     Combines category management in the file system and in the database.
     """
+
+    async def get_category(self, session: AsyncSession, name_or_id: str | int) -> dict[str, Any]:
+        """
+        Returns information about the category.
+        :param session: Instance AsyncSession.
+        :param name_or_id: Category name or id.
+        :return: A dictionary with category data.
+        :raises NotADirectoryError
+        """
+        category_obj = await self.category_crud.get_category(session, name_or_id)
+        if not category_obj:
+            raise NotADirectoryError
+
+        count_files = await self.storage.count_files(category_obj.system_name)
+        result = await self.__to_dict(category_obj)
+        result['count_files'] = count_files
+        return result
 
     async def create(self, session: AsyncSession, name: str, description: str, creator: int) -> dict[str, Any]:
         """
@@ -66,10 +84,13 @@ class CategoryManager(BaseCategoryManager):
                 'creator':int, path: str}.
         :raises TypeError: If new_name type argument not str or int.
         :raises NotADirectoryError: If the category does not exist.
-        :raises ValueError: If a category with that new_name already exists.
+        :raises IsADirectoryError: If a category with that new_name already exists.
                 """
-        category_obj = await self.category_crud.update_category(session, category_name_or_id,
-                                                                new_name=new_name, new_description=new_description)
+        try:
+            category_obj = await self.category_crud.update_category(session, category_name_or_id,
+                                                                    new_name=new_name, new_description=new_description)
+        except ValueError:
+            raise IsADirectoryError
         return await self.__to_dict(category_obj)
 
     async def delete(self, session: AsyncSession, category_name_or_id: str | int):
@@ -100,3 +121,6 @@ class CategoryManager(BaseCategoryManager):
                   'path': category_obj.path,
                   }
         return result
+
+
+category_manager = CategoryManager(STORAGE)
