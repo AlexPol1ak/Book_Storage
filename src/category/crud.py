@@ -139,5 +139,13 @@ class CategoryCRUD:
         await session.commit()
 
     @staticmethod
-    async def all_category():
-        pass
+    async def all_category(session: AsyncSession):
+        """
+        Returns a sequence of all categories.
+        :param session: AsyncSession instance.
+        :return: All categories
+        """
+        stmt = select(Category)
+        categories = await session.scalars(stmt)
+        return categories.all()
+

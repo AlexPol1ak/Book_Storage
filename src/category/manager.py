@@ -1,7 +1,8 @@
 # Manage categories in the file system and database.
 
-from typing import Any
+from typing import Any, List
 
+from asyncstdlib import any_iter
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from FileStorage import StorageManager
@@ -40,7 +41,7 @@ class CategoryManager(BaseCategoryManager):
         :param session: Instance AsyncSession.
         :param name_or_id: Category name or id.
         :return: A dictionary with category data.
-        :raises NotADirectoryError
+        :raises: NotADirectoryError
         """
         category_obj = await self.category_crud.get_category(session, name_or_id)
         if not category_obj:
@@ -49,6 +50,22 @@ class CategoryManager(BaseCategoryManager):
         count_files = await self.storage.count_files(category_obj.system_name)
         result = await self.__to_dict(category_obj)
         result['count_files'] = count_files
+        return result
+
+    async def all_categories(self, session: AsyncSession) -> List[dict]:
+        """Returns objects of all categories."""
+
+        categories_objects = await self.category_crud.all_category(session)
+        if len(categories_objects) == 0:
+            raise NotADirectoryError
+
+        categories_objects = any_iter(categories_objects)  # Get async iterator
+
+        result: List[dict] = []
+        async for obj in categories_objects:
+            cat: dict = await self.__to_dict(obj)
+            cat['count_files'] = await self.storage.count_files(obj.system_name)
+            result.append(cat)
         return result
 
     async def create(self, session: AsyncSession, name: str, description: str, creator: int) -> dict[str, Any]:
